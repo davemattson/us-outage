@@ -12,9 +12,23 @@ jobs:
     steps:
     - name: Check out repo
       uses: actions/checkout@v2
+    - name: Set up dynamic parameter
+      id: set-param
+      run: |
+        # This recreates: y + m + d + h + mi format from JavaScript
+        YEAR=$(date +%Y)
+        # Note: date command months are 1-12, but JavaScript months are 0-11
+        MONTH=$(date +%-m)
+        MONTH=$((MONTH - 1))  # Adjust to match JavaScript's 0-based month
+        DAY=$(date +%-d)
+        HOUR=$(date +%-H)
+        MINUTE=$(date +%-M)
+        TIMESTAMP="${YEAR}${MONTH}${DAY}${HOUR}${MINUTE}"
+        echo "TIMESTAMP_PARAM=$TIMESTAMP" >> $GITHUB_ENV
+        echo "- Timestamp: $TIMESTAMP_PARAM" >> $GITHUB_STEP_SUMMARY   
     - name: Fetch latest data
       run: |-
-        curl https://data.usatoday.com/media/jsons/power/active/national_powerout_slider_data.js?v=2025220932
+        curl https://data.usatoday.com/media/jsons/power/active/national_powerout_slider_data.js?v=${{ env.TIMESTAMP_PARAM }}
     - name: Commit and push if it changed
       run: |-
         git config user.name "outage-data"
